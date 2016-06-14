@@ -1,0 +1,30 @@
+digraph {
+    match_args [style=filled fillcolor=green];
+    match_arg_lists -> match_args;
+    match_expr -> match_arg_lists;
+    match_anteced -> match_expr;
+    match_conseq -> match_arg_lists;
+    covers -> match_conseq;
+    covers -> match_anteced;
+    filter -> covers;
+    build_arg_list [style=filled fillcolor=green];
+    insert_arg [style=filled fillcolor=green];
+    build_arg_list -> insert_arg;
+    build_expr -> predicate;
+    build_expr -> build_arg_list;
+    candidate_rule -> build_expr;
+    suitable [style=dashed];
+    candidate_rule -> suitable;
+    scored_rule -> candidate_rule;
+    scored_rule -> filter;
+    choose_best [style=dashed];
+    new_partial_rule -> choose_best;
+    new_partial_rule -> scored_rule;
+    learn_one_rule -> new_partial_rule;
+    learn_one_rule -> filter;
+    learn_rules -> learn_one_rule;
+    remove [style=dashed];
+    learn_rules -> remove;
+    learn [style=dashed];
+    learn -> learn_rules;
+}
