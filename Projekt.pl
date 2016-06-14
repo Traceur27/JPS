@@ -38,6 +38,11 @@ known_fact(rodzic(marek, bożena)).
 known_fact(córka(bożena, marek)).
 known_fact(córka(bożena, ola)).
 
+predicate(corka, 2).
+predicate(rodzic, 2).
+predicate(syn, 2).
+
+
 % Procedury do opracowania
 % match_args [OK]
 % remove
@@ -60,11 +65,16 @@ between(Min, Max, Value) :-
     Cur =< Max,
     between(Cur, Max, Value).
 
+element_at(X,[X|_],1).
+element_at(X,[_|L],K):-
+    element_at(X,L,K1),
+    K is K1+1.
+
+
 pick_from_table_at([X|_], 1, X).
 pick_from_table_at([_|R], J, Value) :-
-    J > 1,
-	NewJ is J - 1,
-	pick_from_table_at(R, NewJ, Value).
+	pick_from_table_at(R, NewJ, Value),
+	J is NewJ + 1.
 
 /**
  * insert_arg:
@@ -195,7 +205,7 @@ learn_rules(PosExamples, NegExamples, Conseq, VarsIndex, [Rule | RestRules]) :-
 
 
 suitable(rule(Conseq, [Expr|Anteced]), [E|NegExamples]) :-
-    not(covers(Conseq, [Expr|Anteced]), E), !.
+    not(covers(rule(Conseq, [Expr|Anteced]), E)), !.
 
 suitable(rule(Conseq, [Expr|Anteced]), [E|NegExamples]) :-
     suitable(rule(Conseq, [Expr|Anteced]), NegExamples).
@@ -221,26 +231,99 @@ remove([E|RestExamples], Rule, RestPosExamples) :-
 remove([E|RestExamples], Rule, [E|RestPosExamples]) :-
     remove(RestExamples, Rule, RestPosExamples).
 
-learn(ResRules) :-
-    functor(ResRules, Name, N),
+learn(Predicate, ResRules) :-
+    Predicate =..[PredName|PredArgs],
+    length(PredArgs,N),
+    get_idx(PredArgs,Idxs),
+    max_idx(Idxs,LastUsed),
+    functor(Predicate, Name, N), % Name - nazwa predykatu
+                                % N - ilość argumentów predykatu
     % przykłady pozytywne
-    findall(P, select_pos_examples(ResRules, P), PosExamples),
-    write(PosExamples),
-    get_negative_examples(PosExamples, NegExamples),
-    % przykłady negatywne
-    % user input
-    learn_rules(PosExamples, NegExamples, x, 1, ResRules).
+    findall(P, select_pos_examples(Predicate, P), PosExamples),
+    findall(P, find_neg_moje(Predicate, P), NegExamples),
+    learn_rules(PosExamples, NegExamples, Predicate, LastUsed, ResRules).
+
+
+get_idx([],[]).
+get_idx([Arg|RestArg],[Idx|RestIdx]):-
+    variables(L),
+    pick_from_table_at(L, Idx, Arg),
+    get_idx(RestArg, RestIdx).
+
+max_idx([Idx], Idx).
+max_idx([Idx1|Rest],Max):-
+    max_idx(Rest,Idx2),
+    Idx1>Idx2,
+    Max=Idx1.
+max_idx([Idx1|Rest],Max):-
+    max_idx(Rest,Idx2),
+    Idx1=<Idx2,
+    Max=Idx2.
 
 %corka(x,y)
-select_pos_examples(Template, ArgList) :-
+select_pos_examples(Template, Fact) :-
     known_fact(Fact),
     functor(Fact, Name, N),
-    functor(Template, Name, N),
-    Fact =.. [_|ArgList].
+    functor(Template, Name, N).
+
+permN(_,0,[]).
+permN(ObjList,N,[X|Rest]):-
+  N>0,
+  member1(X, ObjList),
+  delete(ObjList,X,NewObjList),
+  N1 is N-1,
+  permN(NewObjList,N1,Rest).
+
+
+find_neg_moje(PredName, Expr):-
+  find_persons(ObjList),
+  functor(PredName, Name, N),
+  permN(ObjList, N ,Args),
+  Expr=..[Name|Args],
+  not(known_fact(Expr)).
+
+find_persons(PersonList) :-
+    setof(Person, find_person(Person), PersonList).
+
+find_person(Person) :-
+    known_fact(Fact),
+    Fact =.. [_|ArgList],
+    member1(Person, ArgList).
+
+find_pos(PredName,ArgLen,Expr):-
+  known_fact(Expr),Expr=..[PredName|Args],
+  length(Args,N),
+  N is ArgLen.
+
+
+find_neg(PredName,ArgLen,Expr):-
+  object_list(ObjList),permN(ObjList,ArgLen,Args),
+  Expr=..[PredName|Args],not(known_fact(Expr)).
+
+object_list(ObjList):-
+  findall(Expr,known_fact(Expr),ExprList),
+  object_list_rec([],ExprList,ObjList).
+object_list_rec(Res,[],Res).
+object_list_rec(ObjList,[Expr|Rexpr],Result):-
+  Expr=..[_|Objs],
+  add_to_list(ObjList,Objs,ParRes),
+  object_list_rec(ParRes,Rexpr,Result).
+
+add_to_list(List,[X|RestToAdd],[X|FilteredList]):-
+  not(member1(X,List)),
+  not(member1(X,RestToAdd)),
+  add_to_list(List,RestToAdd,FilteredList).
+add_to_list(List,[X|RestToAdd],FilteredList):-
+  member1(X,RestToAdd),
+  add_to_list(List,RestToAdd,FilteredList).
+add_to_list(List,[X|RestToAdd],FilteredList):-
+  member1(X,List),
+  add_to_list(List,RestToAdd,FilteredList).
+add_to_list(List,[],List).
 
 
 main :-
-    learn(corka(x,y)),
-    write(R).
+    learn(corka(x,y), Result),
+    write(Result).
 
-:- initialization(once(((main ; true), halt))).
+%:- initialization(once(((main ; true), halt))).
