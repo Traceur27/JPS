@@ -13,6 +13,31 @@ known_fact(rodzic(hanka, andżela)).
 known_fact(rodzic(janusz, seba)).
 known_fact(rodzic(grażyna, seba)).
 
+known_fact(babcia(genowefa, seba)).
+known_fact(dziadek(stefan, seba)).
+known_fact(rodzic(stefan, janusz)).
+known_fact(rodzic(genowefa, janusz)).
+known_fact(syn(janusz, stefan)).
+known_fact(syn(janusz, genowefa)).
+
+
+known_fact(babcia(marcelina, seba)).
+known_fact(dziadek(edmund, seba)).
+known_fact(rodzic(edmund, grażyna)).
+known_fact(rodzic(marcelina, grażyna)).
+known_fact(corka(grazyna, marcelina)).
+known_fact(corka(grazyna, edmund)).
+
+known_fact(rodzic(adam, andrzeja)).
+known_fact(rodzic(ala, andrzeja)).
+known_fact(syn(andrzej, adam)).
+known_fact(syn(andrzej, ala)).
+
+known_fact(rodzic(ola, bożena)).
+known_fact(rodzic(marek, bożena)).
+known_fact(córka(bożena, marek)).
+known_fact(córka(bożena, ola)).
+
 % Procedury do opracowania
 % match_args [OK]
 % remove
