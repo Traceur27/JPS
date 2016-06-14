@@ -1,4 +1,5 @@
-:- ["baza-wiedzy2.pl"].
+#!/usr/bin/swipl -s
+:- style_check(-singleton).
 
 % Procedury do opracowania
 % match_args [OK]
@@ -280,7 +281,18 @@ add_to_list(List,[],List).
 
 
 main :-
-    learn(corka(x,y), Result),
-    write(Result).
+    current_prolog_flag(argv, [DatabaseName, Predicate| Rest]),
+    write(DatabaseName),
+    nl,
+    write(Predicate),
+    nl,
+    ensure_loaded(DatabaseName),
+    write("Database loaded"),
+    nl,
+    term_string(Atom, Predicate),
+    learn(Atom, Result),
+    nl,
+    write(Result),
+    nl.
 
-
+%:-initialization(once(((main ; true), halt))).
